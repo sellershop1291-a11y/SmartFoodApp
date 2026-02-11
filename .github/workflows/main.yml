@@ -12,28 +12,27 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+    
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
-    - name: Build APK
+    - name: Build APK (Smart Find)
       run: |
-        # Attempt to find the project root
-        if [ -d "SmartFood" ]; then
-          echo "Entering SmartFood directory..."
-          cd SmartFood
+        echo "Looking for gradlew..."
+        if [ -f "./gradlew" ]; then
+            echo "Found at root!"
+            chmod +x gradlew
+            ./gradlew assembleDebug --stacktrace
+        elif [ -f "./SmartFood/gradlew" ]; then
+            echo "Found inside SmartFood folder!"
+            cd SmartFood
+            chmod +x gradlew
+            ./gradlew assembleDebug --stacktrace
+        else
+            echo "ERROR: Could not find project files. Listing all files:"
+            find . -maxdepth 3
+            exit 1
         fi
-
-        # Verify gradlew exists
-        if [ ! -f "gradlew" ]; then
-          echo "Error: gradlew file not found in $(pwd)"
-          echo "Listing all files to debug:"
-          find . -maxdepth 3 -not -path '*/.*'
-          exit 1
-        fi
-
-        echo "Making gradlew executable..."
-        chmod +x gradlew
-
-        echo "Building Debug APK..."
-        ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
       if: success()
